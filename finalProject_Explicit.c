@@ -11,13 +11,11 @@ int main(int argc,char **args)
   PetscErrorCode ierr;
   PetscInt       i, col[3], rstart, rend, nlocal, rank;
   PetscInt       n = 128;    /*这是将区域分成n块*/
-  PetscReal      dx = 1/n, dt;    /*空间步长和时间步长*/
+  PetscReal      dx = 1/n;    /*空间步长和时间步长*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
-  PetscReal      alpha = 0.16;      /*通过dt和dx求解alpha，方便后续计算*/
-  PetscScalar    zero = 0.0, value[3], u0;
-  dt = alpha*dx*dx;
+  PetscReal      alpha = 0.16*k/p/c;      /*通过dt和dx求解alpha，方便后续计算*/
+  PetscScalar    zero = 0.0, value[3];
 
-  int n = 0;
 
   ierr = PetscInitialize(&argc,&args,(char*)0,help);if (ierr) return ierr;
   ierr = PetscOptionsGetInt(NULL,NULL,"-n",&n,NULL);CHKERRQ(ierr);
@@ -68,8 +66,9 @@ int main(int argc,char **args)
   ierr = VecSet(z,zero);CHKERRQ(ierr);
   if(rank == 0){
     for(int i = 0; i < n+1; i++){
+	  PetscReal u0;
       u0 = exp(i*dx);
-	    ierr = VecSetValues(z, 1, &i, &u0, INSERT_VALUES);CHKERRQ(ierr);
+	  ierr = VecSetValues(z, 1, &i, &u0, INSERT_VALUES);CHKERRQ(ierr);
     }
   }
   
