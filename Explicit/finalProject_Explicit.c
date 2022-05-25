@@ -8,7 +8,7 @@ static char help[] = "Solves a tridiagonal linear system.\n\n";
 
 int main(int argc,char **args)
 {
-  Vec            x, z;          
+  Vec            x, z, b;          
   Mat            A;                /* linear system matrix */
   PetscReal      norm = 0.0, normt = 1.0, tol = 1000.*PETSC_MACHINE_EPSILON;  /* norm of solution error */
   PetscErrorCode ierr;
@@ -22,7 +22,7 @@ int main(int argc,char **args)
 
   ierr = PetscInitialize(&argc,&args,(char*)0,help);if (ierr) return ierr;
   ierr = PetscOptionsGetInt(NULL,NULL,"-n",&n,NULL);CHKERRQ(ierr);
-  ierr = PetscOptionsGetInt(NULL,NULL,"-dt",&dt,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsGetReal(NULL,NULL,"-dt",&dt,NULL);CHKERRQ(ierr);
   ierr = MPI_Comm_rank(PETSC_COMM_WORLD, &rank);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "n = %d\n", n);CHKERRQ(ierr);
 
@@ -82,19 +82,27 @@ int main(int argc,char **args)
   ierr = VecAssemblyEnd(z);CHKERRQ(ierr);
   
   
+  ierr = VecSet(b,zero);CHKERRQ(ierr);
+  if(rank == 0){
+    for(int i = 0; i < n; i++){
+	  PetscReal inp;
+       inp = dt*sin(pi*(i+0.5)*dx);
+	  ierr = VecSetValues(b, 1, &i, &inp, INSERT_VALUES);CHKERRQ(ierr);
+    }
+  }
+  
+  ierr = VecAssemblyBegin(b);CHKERRQ(ierr);
+  ierr = VecAssemblyEnd(b);CHKERRQ(ierr);
+  
+  
   while(PetscAbsReal(norm-normt)>tol){
      normt= norm;
      ierr = MatMult(A,z,x);CHKERRQ(ierr);
      ierr = VecNorm(x,NORM_2,&norm);CHKERRQ(ierr);
      ierr = VecScale(x,(PetscScalar)1.0/norm);CHKERRQ(ierr);
-	 for(int i = 0; i < n; i++){
-	   PetscReal inp;
-       inp = dt*sin(pi*(i+0.5)*dx);
-	   ierr = VecSetValues(x, 1, &i, &inp, ADD_VALUES);CHKERRQ(ierr);
-      }
-     ierr = VecAssemblyBegin(x);CHKERRQ(ierr);
-     ierr = VecAssemblyEnd(x);CHKERRQ(ierr);	  
-	  
+	 
+	 ierr = VecAXPY(x,-1.0,b);CHKERRQ(ierr);
+
      ierr = VecCopy(x,z);CHKERRQ(ierr);
   }
   
@@ -103,6 +111,7 @@ int main(int argc,char **args)
  
   ierr = VecDestroy(&x);CHKERRQ(ierr); 
   ierr = VecDestroy(&z);CHKERRQ(ierr);
+  ierr = VecDestroy(&b);CHKERRQ(ierr);
   ierr = MatDestroy(&A);CHKERRQ(ierr);
 
   ierr = PetscFinalize();
