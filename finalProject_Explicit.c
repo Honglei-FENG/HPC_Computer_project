@@ -23,7 +23,7 @@ int main(int argc,char **args)
   ierr = PetscPrintf(PETSC_COMM_WORLD, "n = %d\n", n);CHKERRQ(ierr);
 
   ierr = VecCreate(PETSC_COMM_WORLD,&x);CHKERRQ(ierr);
-  ierr = VecSetSizes(x,PETSC_DECIDE,n);CHKERRQ(ierr);
+  ierr = VecSetSizes(x,PETSC_DECIDE,n+1);CHKERRQ(ierr);
   ierr = VecSetFromOptions(x);CHKERRQ(ierr);
   ierr = VecDuplicate(x,&z);CHKERRQ(ierr);
 
@@ -31,7 +31,7 @@ int main(int argc,char **args)
   ierr = VecGetLocalSize(x,&nlocal);CHKERRQ(ierr);
 
   ierr = MatCreate(PETSC_COMM_WORLD,&A);CHKERRQ(ierr);
-  ierr = MatSetSizes(A,nlocal,nlocal,n,n);CHKERRQ(ierr);
+  ierr = MatSetSizes(A,nlocal,nlocal,n+1,n+1);CHKERRQ(ierr);
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
   ierr = MatSetUp(A);CHKERRQ(ierr);
 
@@ -43,10 +43,10 @@ int main(int argc,char **args)
     ierr   = MatSetValues(A,1,&i,2,col,value,INSERT_VALUES);CHKERRQ(ierr);
   }
   
-  if (rend == n) 
+  if (rend == n+1) 
   {
-    rend = n-1;
-    i    = n-1; col[0] = n-2; col[1] = n-1; value[0] = alpha; value[1] = 1-2.0*alpha;
+    rend = n;
+    i    = n; col[0] = n-1; col[1] = n; value[0] = alpha; value[1] = 1-2.0*alpha;
     ierr = MatSetValues(A,1,&i,2,col,value,INSERT_VALUES);CHKERRQ(ierr);
   }
 
