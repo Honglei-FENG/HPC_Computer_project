@@ -32,6 +32,7 @@ int main(int argc,char **args)
   ierr = VecSetSizes(x,PETSC_DECIDE,n);CHKERRQ(ierr);
   ierr = VecSetFromOptions(x);CHKERRQ(ierr);
   ierr = VecDuplicate(x,&z);CHKERRQ(ierr);
+  ierr = VecDuplicate(x,&b);CHKERRQ(ierr);
 
   ierr = VecGetOwnershipRange(x,&rstart,&rend);CHKERRQ(ierr);
   ierr = VecGetLocalSize(x,&nlocal);CHKERRQ(ierr);
@@ -98,11 +99,11 @@ int main(int argc,char **args)
   while(PetscAbsReal(norm-normt)>tol){
      normt= norm;
      ierr = MatMult(A,z,x);CHKERRQ(ierr);
+	 ierr = VecAXPY(x,1.0,b);CHKERRQ(ierr);
+	 
      ierr = VecNorm(x,NORM_2,&norm);CHKERRQ(ierr);
      ierr = VecScale(x,(PetscScalar)1.0/norm);CHKERRQ(ierr);
 	 
-	 ierr = VecAXPY(x,-1.0,b);CHKERRQ(ierr);
-
      ierr = VecCopy(x,z);CHKERRQ(ierr);
   }
   
