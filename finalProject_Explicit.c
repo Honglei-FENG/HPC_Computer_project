@@ -16,7 +16,7 @@ int main(int argc,char **args)
   PetscInt       n = 128;    /*这是将区域分成n块*/
   PetscReal      dx = 1/n, dt = 0.00001;    /*空间步长和时间步长*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
-  PetscReal      alpha = dt/dx/dx*k/p/c;      /*通过dt和dx求解alpha，方便后续计算*/
+  PetscReal      te = k/p/c, alpha = te*dt*n*n;      /*通过dt和dx求解alpha，方便后续计算*/
   PetscScalar    zero = 0.0, value[3];
 
 
