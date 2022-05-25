@@ -2,6 +2,9 @@ static char help[] = "Solves a tridiagonal linear system.\n\n";
 
 #include <petscksp.h>
 #include <petscmath.h>
+#include <math.h>
+
+#define pi acos(-1)
 
 int main(int argc,char **args)
 {
@@ -11,9 +14,9 @@ int main(int argc,char **args)
   PetscErrorCode ierr;
   PetscInt       i, col[3], rstart, rend, nlocal, rank;
   PetscInt       n = 128;    /*这是将区域分成n块*/
-  PetscReal      dx = 1/n;    /*空间步长和时间步长*/
+  PetscReal      dx = 1/n, dt = 0.00001;    /*空间步长和时间步长*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
-  PetscReal      alpha = 0.16*k/p/c;      /*通过dt和dx求解alpha，方便后续计算*/
+  PetscReal      alpha = dt/dx/dx*k/p/c;      /*通过dt和dx求解alpha，方便后续计算*/
   PetscScalar    zero = 0.0, value[3];
 
 
@@ -75,11 +78,20 @@ int main(int argc,char **args)
   ierr = VecAssemblyBegin(z);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(z);CHKERRQ(ierr);
   
+  
   while(PetscAbsReal(norm-normt)>tol){
      normt= norm;
      ierr = MatMult(A,z,x);CHKERRQ(ierr);
      ierr = VecNorm(x,NORM_2,&norm);CHKERRQ(ierr);
      ierr = VecScale(x,(PetscScalar)1.0/norm);CHKERRQ(ierr);
+	 for(int i = 0; i < n+1; i++){
+	   PetscReal inp;
+       inp = dt*sin(pi*i*dx);
+	   ierr = VecSetValues(x, 1, &i, &inp, ADD_VALUES);CHKERRQ(ierr);
+      }
+     ierr = VecAssemblyBegin(x);CHKERRQ(ierr);
+     ierr = VecAssemblyEnd(x);CHKERRQ(ierr);	  
+	  
      ierr = VecCopy(x,z);CHKERRQ(ierr);
   }
   
