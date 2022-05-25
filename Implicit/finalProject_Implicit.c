@@ -48,18 +48,18 @@ int main(int argc,char **args)
   if (!rstart) 
   {
     rstart = 1;
-    i      = 0; col[0] = 0; col[1] = 1; value[0] = 1-2.0*alpha; value[1] = alpha;
+    i      = 0; col[0] = 0; col[1] = 1; value[0] = 1+2.0*alpha; value[1] = -alpha;
     ierr   = MatSetValues(A,1,&i,2,col,value,INSERT_VALUES);CHKERRQ(ierr);
   }
   
   if (rend == n) 
   {
     rend = n-1;
-    i    = n-1; col[0] = n-2; col[1] = n-1; value[0] = alpha; value[1] = 1-2.0*alpha;
+    i    = n-1; col[0] = n-2; col[1] = n-1; value[0] = -alpha; value[1] = 1+2.0*alpha;
     ierr = MatSetValues(A,1,&i,2,col,value,INSERT_VALUES);CHKERRQ(ierr);
   }
 
-  value[0] = alpha; value[1] = 1-2.0*alpha; value[2] = alpha;
+  value[0] = -alpha; value[1] = 1+2.0*alpha; value[2] = -alpha;
   for (i=rstart; i<rend; i++) 
   {
     col[0] = i-1; col[1] = i; col[2] = i+1;
@@ -75,9 +75,9 @@ int main(int argc,char **args)
   ierr = VecSet(b,zero);CHKERRQ(ierr);
   if(rank == 0){
     for(int i = 0; i < n; i++){
-	  PetscReal u0;
+      PetscReal u0;
       u0 = exp((i+0.5)*dx);
-	  ierr = VecSetValues(b, 1, &i, &u0, INSERT_VALUES);CHKERRQ(ierr);
+      ierr = VecSetValues(b, 1, &i, &u0, INSERT_VALUES);CHKERRQ(ierr);
     }
   }
   
@@ -88,9 +88,9 @@ int main(int argc,char **args)
   ierr = VecSet(u,zero);CHKERRQ(ierr);
   if(rank == 0){
     for(int i = 0; i < n; i++){
-	  PetscReal inp;
+      PetscReal inp;
        inp = dt*sin(pi*(i+0.5)*dx);
-	  ierr = VecSetValues(u, 1, &i, &inp, INSERT_VALUES);CHKERRQ(ierr);
+      ierr = VecSetValues(u, 1, &i, &inp, INSERT_VALUES);CHKERRQ(ierr);
     }
   }
   
@@ -109,7 +109,7 @@ int main(int argc,char **args)
 
     ierr = VecAXPY(b,1.0,u);CHKERRQ(ierr);
     ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
-	  
+      
     ierr = VecNorm(x,NORM_2,&norm);CHKERRQ(ierr);
     ierr = VecScale(x,(PetscScalar)1.0/norm);CHKERRQ(ierr);
     ierr = VecCopy(x,b);CHKERRQ(ierr);
