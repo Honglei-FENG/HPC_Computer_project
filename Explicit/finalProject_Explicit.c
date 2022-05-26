@@ -45,7 +45,6 @@ int main(int argc,char **args)
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
   ierr = MatSetUp(A);CHKERRQ(ierr);
 
-
   if (!rstart) 
   {
     rstart = 1;
@@ -72,7 +71,6 @@ int main(int argc,char **args)
   ierr = MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);
   ierr = MatView(A, PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
 
-
   ierr = VecSet(z,zero);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"dx = %f\n",dx);CHKERRQ(ierr);
   if(rank == 0)
@@ -85,11 +83,8 @@ int main(int argc,char **args)
     }
   }
   
-  
-  
   ierr = VecAssemblyBegin(z);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(z);CHKERRQ(ierr);
-  ierr = VecView(z,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   
   xi = 0.0;
   
@@ -98,7 +93,6 @@ int main(int argc,char **args)
     for(ii = 1; ii < n+1; ii++){
 	  PetscReal inp;
     xi = ii*dx*pi;
-    ierr = PetscPrintf(PETSC_COMM_WORLD,"sin(x) = %f\n",sin(xi));CHKERRQ(ierr);
     inp = dt*sin(xi);
 	  ierr = VecSetValues(b, 1, &ii, &inp, INSERT_VALUES);CHKERRQ(ierr);
     }
@@ -106,8 +100,6 @@ int main(int argc,char **args)
   
   ierr = VecAssemblyBegin(b);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(b);CHKERRQ(ierr);
-  ierr = VecView(b,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-  
   
   while(PetscAbsReal(t)<2.0){
 
@@ -116,23 +108,17 @@ int main(int argc,char **args)
      ierr = MatMult(A,z,x);CHKERRQ(ierr);
      ierr = VecAXPY(x,1.0,b);CHKERRQ(ierr);
 
-
      ierr = VecSetValues(x, 1, &start, &zero, INSERT_VALUES);CHKERRQ(ierr);
      ierr = VecSetValues(x, 1, &end, &zero, INSERT_VALUES);CHKERRQ(ierr);
 
-
      ierr = VecAssemblyBegin(x);CHKERRQ(ierr);
      ierr = VecAssemblyEnd(x);CHKERRQ(ierr);
-
-    //  ierr = VecNorm(x,NORM_2,&norm);CHKERRQ(ierr);
-    //  ierr = VecScale(x,(PetscScalar)1.0/norm);CHKERRQ(ierr);
 	   
      ierr = VecCopy(x,z);CHKERRQ(ierr);
   }
   
   ierr = VecView(z,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
- 
- 
+  
   ierr = VecDestroy(&x);CHKERRQ(ierr); 
   ierr = VecDestroy(&z);CHKERRQ(ierr);
   ierr = VecDestroy(&b);CHKERRQ(ierr);
