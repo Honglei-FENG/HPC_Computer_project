@@ -55,7 +55,7 @@ int main(int argc,char **args)
   
   if (rend == n+1)     /*最后一行*/
   {
-    rend = n;    /*将rend设为1*/
+    rend = n;    /*将rend设为n*/
     i    = n; col[0] = n-1; col[1] = n; value[0] = alpha; value[1] = 1-2.0*alpha;    /*设置要用到的参数*/
     ierr = MatSetValues(A,1,&i,2,col,value,INSERT_VALUES);CHKERRQ(ierr);    /*设置三对角矩阵的最后一行*/
   }
@@ -119,7 +119,7 @@ int main(int argc,char **args)
      ierr = VecCopy(x,z);CHKERRQ(ierr);    /*将x的值赋给z*/
   }
   
-  ierr = VecView(z,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);    /*打印向量，获得稳态时的值*/
+  ierr = VecView(z,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);    /*打印向量，获得结束时显式方法的值*/
   
   ierr = VecDestroy(&x);CHKERRQ(ierr);    /*关闭向量x*/
   ierr = VecDestroy(&z);CHKERRQ(ierr);    /*关闭向量z*/
