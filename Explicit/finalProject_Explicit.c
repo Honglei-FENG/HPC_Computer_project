@@ -29,6 +29,7 @@ int main(int argc,char **args)
 
   dx = 1/(PetscReal)n;    /*计算出每一小格的长度*/
   alpha = te*dt*n*n;    /*计算出CFL的值（显式格式中，CFL不能大于0.5）*/
+  end = n;    /*更新end的值*/
   ierr = PetscPrintf(PETSC_COMM_WORLD,"dx = %f\n",dx);CHKERRQ(ierr);    /*将dx的值打印出来，方便阅读输出文件时参考*/
   ierr = PetscPrintf(PETSC_COMM_WORLD,"alpha = %f\n",alpha);CHKERRQ(ierr);    /*将alpha的值打印出来，方便阅读输出文件时参考*/
 
