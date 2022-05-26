@@ -10,11 +10,11 @@ int main(int argc,char **args)
 {
   Vec            x, z, b;          
   Mat            A;                /* linear system matrix */
-  PetscReal      norm = 0.0, xi = 0.0;  /* norm of solution error */
+  PetscReal      xi = 0.0;
   PetscErrorCode ierr;
   PetscInt       i, ii = 0, col[3], rstart, rend, nlocal, rank;
   PetscInt       n = 128, start = 0, end = n;    /*这是将区域分成n块*/
-  PetscReal      dx = 0.0, dt = 0.00001, t = 0.0;    /*空间步长和时间步长*/
+  PetscReal      dx = 0.0, dt = 0.00003, t = 0.0;    /*空间步长和时间步长*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
   PetscReal      te = k/p/c, alpha = te*dt*n*n;      /*通过dt和dx求解alpha，方便后续计算*/
   PetscScalar    zero = 0.0, value[3], u0 = 0.0;
@@ -109,21 +109,23 @@ int main(int argc,char **args)
   ierr = VecView(b,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   
   
-  while(PetscAbsReal(t)<3.0){
+  while(PetscAbsReal(t)<2.0){
 
      t += dt;
      
      ierr = MatMult(A,z,x);CHKERRQ(ierr);
      ierr = VecAXPY(x,1.0,b);CHKERRQ(ierr);
 
+
      ierr = VecSetValues(x, 1, &start, &zero, INSERT_VALUES);CHKERRQ(ierr);
      ierr = VecSetValues(x, 1, &end, &zero, INSERT_VALUES);CHKERRQ(ierr);
 
+
      ierr = VecAssemblyBegin(x);CHKERRQ(ierr);
      ierr = VecAssemblyEnd(x);CHKERRQ(ierr);
-	 
-     ierr = VecNorm(x,NORM_2,&norm);CHKERRQ(ierr);
-     ierr = VecScale(x,(PetscScalar)1.0/norm);CHKERRQ(ierr);
+
+    //  ierr = VecNorm(x,NORM_2,&norm);CHKERRQ(ierr);
+    //  ierr = VecScale(x,(PetscScalar)1.0/norm);CHKERRQ(ierr);
 	   
      ierr = VecCopy(x,z);CHKERRQ(ierr);
   }
