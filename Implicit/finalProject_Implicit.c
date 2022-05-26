@@ -16,7 +16,7 @@ int main(int argc,char **args)
   PetscErrorCode ierr;    /*检查错误信息*/
   PetscInt       i, ii = 0, col[3], rstart, rend, nlocal, rank;
    /*其中i,ii是矩阵和向量的角标，col是三对角矩阵参数的位置，rstart和rend均为设置矩阵时需要的参数，nlocal和rank为程序并行化所需参数*/
-  PetscInt       n = 128, start = 0, end = n;    /*这是将区域分成n块，start是起始边界，end是终止边界*/
+  PetscInt       n = 128, start = 0, end = 0;    /*这是将区域分成n块，start是起始边界，end是终止边界*/
   PetscReal      dx = 0.0, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
   PetscReal      te = k/p/c, alpha = te*dt*n*n;      /*通过dt和dx求解alpha，方便后续计算*/
@@ -29,8 +29,9 @@ int main(int argc,char **args)
   ierr = MPI_Comm_rank(PETSC_COMM_WORLD, &rank);CHKERRQ(ierr);    /*设置并行MPI参数*/
   ierr = PetscPrintf(PETSC_COMM_WORLD, "n = %d\n", n);CHKERRQ(ierr);    /*将n的值打印出来，方便阅读输出文件时参考*/
 
-  dx = 1/(PetscReal)n;    /*计算出每一小格的长度*/
+  dx = 1.0/(PetscReal)n;    /*计算出每一小格的长度*/
   alpha = te*dt*n*n;    /*计算出CFL的值（显式格式中，CFL不能大于0.5）*/
+  end = n;    /*更新end的值*/
   ierr = PetscPrintf(PETSC_COMM_WORLD,"dx = %f\n",dx);CHKERRQ(ierr);    /*将dx的值打印出来，方便阅读输出文件时参考*/
   ierr = PetscPrintf(PETSC_COMM_WORLD,"alpha = %f\n",alpha);CHKERRQ(ierr);    /*将alpha的值打印出来，方便阅读输出文件时参考*/
 
