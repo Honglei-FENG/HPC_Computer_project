@@ -27,6 +27,7 @@ int main(int argc,char **args)
   ierr = PetscPrintf(PETSC_COMM_WORLD, "n = %d\n", n);CHKERRQ(ierr);
 
   dx = 1/(PetscReal)n;
+  alpha = te*dt*n*n;
   ierr = PetscPrintf(PETSC_COMM_WORLD,"dx = %f\n",dx);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD,"alpha = %f\n",alpha);CHKERRQ(ierr);
 
@@ -108,7 +109,7 @@ int main(int argc,char **args)
   ierr = VecView(b,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   
   
-  while(PetscAbsReal(t)<3){
+  while(PetscAbsReal(t)<3.0){
 
      t += dt;
      
