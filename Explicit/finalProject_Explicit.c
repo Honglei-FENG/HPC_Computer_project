@@ -123,7 +123,7 @@ int main(int argc,char **args)
 	 
      ierr = VecNorm(x,NORM_2,&norm);CHKERRQ(ierr);
      ierr = VecScale(x,(PetscScalar)1.0/norm);CHKERRQ(ierr);
-	 
+	   
      ierr = VecCopy(x,z);CHKERRQ(ierr);
   }
   
