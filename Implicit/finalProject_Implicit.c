@@ -12,14 +12,15 @@ int main(int argc,char **args)
   Mat            A;                /* linear system matrix */
   KSP            ksp;              /* linear solver context */
   PC             pc;               /* preconditioner context */
-  PetscReal      norm = 0.0, normt = 1.0, tol = 1000.*PETSC_MACHINE_EPSILON;  /* norm of solution error */
+  PetscReal      xi = 0.0;  /* norm of solution error */
   PetscErrorCode ierr;
-  PetscInt       i, col[3], its, rstart, rend, nlocal, rank;
-  PetscInt       n = 128;    /*这是将区域分成n块*/
-  PetscReal      dx = 1/n, dt = 0.00001;    /*空间步长和时间步长*/
+  PetscInt       i, ii = 0, col[3], rstart, rend, nlocal, rank;
+  // PerscInt       its;
+  PetscInt       n = 128, start = 0, end = n;    /*这是将区域分成n块*/
+  PetscReal      dx = 0.0, dt = 0.00003, t = 0.0;    /*空间步长和时间步长*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
   PetscReal      te = k/p/c, alpha = te*dt*n*n;      /*通过dt和dx求解alpha，方便后续计算*/
-  PetscScalar    zero = 0.0, value[3];
+  PetscScalar    zero = 0.0, value[3], u0 = 0.0;;
 
 
   ierr = PetscInitialize(&argc,&args,(char*)0,help);if (ierr) return ierr;
@@ -28,10 +29,13 @@ int main(int argc,char **args)
   ierr = MPI_Comm_rank(PETSC_COMM_WORLD, &rank);CHKERRQ(ierr);
   ierr = PetscPrintf(PETSC_COMM_WORLD, "n = %d\n", n);CHKERRQ(ierr);
 
+  dx = 1/(PetscReal)n;
   alpha = te*dt*n*n;
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"dx = %f\n",dx);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"alpha = %f\n",alpha);CHKERRQ(ierr);
 
   ierr = VecCreate(PETSC_COMM_WORLD,&x);CHKERRQ(ierr);
-  ierr = VecSetSizes(x,PETSC_DECIDE,n);CHKERRQ(ierr);
+  ierr = VecSetSizes(x,PETSC_DECIDE,n+1);CHKERRQ(ierr);
   ierr = VecSetFromOptions(x);CHKERRQ(ierr);
   ierr = VecDuplicate(x,&b);CHKERRQ(ierr);
   ierr = VecDuplicate(x,&u);CHKERRQ(ierr);
@@ -40,7 +44,7 @@ int main(int argc,char **args)
   ierr = VecGetLocalSize(x,&nlocal);CHKERRQ(ierr);
 
   ierr = MatCreate(PETSC_COMM_WORLD,&A);CHKERRQ(ierr);
-  ierr = MatSetSizes(A,nlocal,nlocal,n,n);CHKERRQ(ierr);
+  ierr = MatSetSizes(A,nlocal,nlocal,n+1,n+1);CHKERRQ(ierr);
   ierr = MatSetFromOptions(A);CHKERRQ(ierr);
   ierr = MatSetUp(A);CHKERRQ(ierr);
 
@@ -52,10 +56,10 @@ int main(int argc,char **args)
     ierr   = MatSetValues(A,1,&i,2,col,value,INSERT_VALUES);CHKERRQ(ierr);
   }
   
-  if (rend == n) 
+  if (rend == n+1) 
   {
-    rend = n-1;
-    i    = n-1; col[0] = n-2; col[1] = n-1; value[0] = -alpha; value[1] = 1+2.0*alpha;
+    rend = n;
+    i    = n; col[0] = n-1; col[1] = n; value[0] = -alpha; value[1] = 1+2.0*alpha;
     ierr = MatSetValues(A,1,&i,2,col,value,INSERT_VALUES);CHKERRQ(ierr);
   }
 
@@ -73,29 +77,37 @@ int main(int argc,char **args)
 
 
   ierr = VecSet(b,zero);CHKERRQ(ierr);
-  if(rank == 0){
-    for(int i = 0; i < n; i++){
-      PetscReal u0;
-      u0 = exp((i+0.5)*dx);
-      ierr = VecSetValues(b, 1, &i, &u0, INSERT_VALUES);CHKERRQ(ierr);
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"dx = %f\n",dx);CHKERRQ(ierr);
+  if(rank == 0)
+  {
+    for(ii = 1; ii < n; ii++){
+      xi = ii*dx;
+      u0 = exp(xi);
+      ierr = VecSetValues(b, 1, &ii, &u0, INSERT_VALUES);CHKERRQ(ierr);
     }
   }
   
   ierr = VecAssemblyBegin(b);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(b);CHKERRQ(ierr);
+
+  ierr = VecView(b,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   
+  xi = 0.0;
   
   ierr = VecSet(u,zero);CHKERRQ(ierr);
   if(rank == 0){
-    for(int i = 0; i < n; i++){
+    for(ii = 1; ii < n; ii++){
       PetscReal inp;
-       inp = dt*sin(pi*(i+0.5)*dx);
-      ierr = VecSetValues(u, 1, &i, &inp, INSERT_VALUES);CHKERRQ(ierr);
+      xi = ii*dx*pi;
+      inp = dt*sin(xi);
+      ierr = VecSetValues(u, 1, &ii, &inp, INSERT_VALUES);CHKERRQ(ierr);
     }
   }
   
   ierr = VecAssemblyBegin(u);CHKERRQ(ierr);
   ierr = VecAssemblyEnd(u);CHKERRQ(ierr);
+
+  ierr = VecView(u,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
   
   ierr = KSPCreate(PETSC_COMM_WORLD,&ksp);CHKERRQ(ierr);
   ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);
@@ -104,22 +116,25 @@ int main(int argc,char **args)
   ierr = KSPSetTolerances(ksp,1.e-7,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
 
-  while(PetscAbsReal(norm-normt)>tol){
-    normt= norm;
+  while(PetscAbsReal(t)<3.0){
+    t += dt;
 
     ierr = VecAXPY(b,1.0,u);CHKERRQ(ierr);
     ierr = KSPSolve(ksp,b,x);CHKERRQ(ierr);
-      
-    ierr = VecNorm(x,NORM_2,&norm);CHKERRQ(ierr);
-    ierr = VecScale(x,(PetscScalar)1.0/norm);CHKERRQ(ierr);
+    
+    ierr = VecSetValues(x, 1, &start, &zero, INSERT_VALUES);CHKERRQ(ierr);
+    ierr = VecSetValues(x, 1, &end, &zero, INSERT_VALUES);CHKERRQ(ierr);
+
+    ierr = VecAssemblyBegin(x);CHKERRQ(ierr);
+    ierr = VecAssemblyEnd(x);CHKERRQ(ierr);
+
     ierr = VecCopy(x,b);CHKERRQ(ierr);
   }
   
-  ierr = KSPGetIterationNumber(ksp,&its);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"Iterations %D\n",its);CHKERRQ(ierr);
+  // ierr = KSPGetIterationNumber(ksp,&its);CHKERRQ(ierr);
+  // ierr = PetscPrintf(PETSC_COMM_WORLD,"Iterations %D\n",its);CHKERRQ(ierr);
 
   ierr = VecView(b,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"solution = %f\n",norm);CHKERRQ(ierr);
  
   ierr = VecDestroy(&x);CHKERRQ(ierr); 
   ierr = VecDestroy(&u);CHKERRQ(ierr);
