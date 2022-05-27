@@ -10,15 +10,15 @@ int main(int argc,char **args)
 {
   Vec            x, z, b;    /*设置所需向量*/
   Mat            A;    /*设置所需矩阵*/
-  PetscReal      xi = 0.0;    /*记录初始化和单位体积供热量的位置*/
   PetscErrorCode ierr;    /*检查错误信息*/
-  PetscInt       i, ii = 0, col[3], rstart, rend, nlocal, rank;
+  PetscInt       i, ii, col[3], rstart, rend, nlocal, rank;
   /*其中i,ii是矩阵和向量的角标，col是三对角矩阵参数的位置，rstart和rend均为设置矩阵时需要的参数，nlocal和rank为程序并行化所需参数*/
-  PetscInt       n = 128, start = 0, end = n;    /*这是将区域分成n块，start是起始边界，end是终止边界*/
-  PetscReal      dx = 0.0, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
+  PetscInt       n = 128, start = 0, end;    /*这是将区域分成n块，start是起始边界，end是终止边界*/
+  PetscReal      dx, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
-  PetscReal      te = k/p/c, alpha = te*dt*n*n;    /*通过dt和dx求解alpha，方便后续计算*/
+  PetscReal      te = k/p/c, alpha;    /*通过dt和dx求解alpha，方便后续计算*/
   PetscScalar    zero = 0.0, value[3], u0 = 0.0;    /*value是设置三对角矩阵的参数，u0是初始条件*/
+  PetscViewer    pv;
 
 
   ierr = PetscInitialize(&argc,&args,(char*)0,help);if (ierr) return ierr;    /*初始化Petsc*/
@@ -27,9 +27,9 @@ int main(int argc,char **args)
   ierr = MPI_Comm_rank(PETSC_COMM_WORLD, &rank);CHKERRQ(ierr);    /*设置并行MPI参数*/
   ierr = PetscPrintf(PETSC_COMM_WORLD, "n = %d\n", n);CHKERRQ(ierr);    /*将n的值打印出来，方便阅读输出文件时参考*/
 
-  dx = 1/(PetscReal)n;    /*计算出每一小格的长度*/
-  alpha = te*dt*n*n;    /*计算出CFL的值（显式格式中，CFL不能大于0.5）*/
-  end = n;    /*更新end的值*/
+  dx   = 1.0/n;    /*计算出每一小格的长度*/
+  alpha= te*dt*n*n;    /*计算出CFL的值（显式格式中，CFL不能大于0.5）*/
+  end  = n;    /*更新end的值*/
   ierr = PetscPrintf(PETSC_COMM_WORLD,"dx = %f\n",dx);CHKERRQ(ierr);    /*将dx的值打印出来，方便阅读输出文件时参考*/
   ierr = PetscPrintf(PETSC_COMM_WORLD,"alpha = %f\n",alpha);CHKERRQ(ierr);    /*将alpha的值打印出来，方便阅读输出文件时参考*/
 
@@ -80,24 +80,20 @@ int main(int argc,char **args)
   {
     for(ii = 1; ii < n; ii++)    /*除首尾两个点外的其余点*/
     {
-      xi = ii*dx;    /*获取当前的位置*/
-      u0 = exp(xi);    /*根据当前位置来获取初始值*/
+      u0   = exp(ii*dx);    /*根据当前位置来获取初始值*/
 	    ierr = VecSetValues(z, 1, &ii, &u0, INSERT_VALUES);CHKERRQ(ierr);    /*将向量的对应位置的值进行修改*/
     }
   }
   
   ierr = VecAssemblyBegin(z);CHKERRQ(ierr);    /*通知其余并行块将向量统一*/
   ierr = VecAssemblyEnd(z);CHKERRQ(ierr);    /*结束通知*/
-  
-  xi = 0.0;    /*初始化位置点*/
+
   
   ierr = VecSet(b,zero);CHKERRQ(ierr);    /*设置初始向量b*/
   if(rank == 0){    /*开始设置初始条件*/
     for(ii = 1; ii < n+1; ii++){    /*除首尾两个点外的其余点*/
-	  PetscReal inp;    /*临时参数*/
-    xi = ii*dx*pi;    /*获取当前的位置，并将其乘以pi*/
-    inp = dt*sin(xi);    /*根据当前位置来获取传热值*/
-	  ierr = VecSetValues(b, 1, &ii, &inp, INSERT_VALUES);CHKERRQ(ierr);    /*将向量的对应位置的值进行修改*/
+    u0   = dt*sin(ii*dx*pi);    /*根据当前位置来获取传热值*/
+	  ierr = VecSetValues(b, 1, &ii, &u0, INSERT_VALUES);CHKERRQ(ierr);    /*将向量的对应位置的值进行修改*/
     }
   }
   
@@ -121,6 +117,13 @@ int main(int argc,char **args)
   }
   
   ierr = VecView(z,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);    /*打印向量，获得结束时显式方法的值*/
+
+  /*Viewer to output in HDF5 format*/
+  
+  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&pv);CHKERRQ(ierr);
+  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,"explicit.dat",&pv);CHKERRQ(ierr);
+  ierr = VecView(z, pv);CHKERRQ(ierr);
+  ierr = PetscViewerDestroy(&pv);CHKERRQ(ierr);
   
   ierr = VecDestroy(&x);CHKERRQ(ierr);    /*关闭向量x*/
   ierr = VecDestroy(&z);CHKERRQ(ierr);    /*关闭向量z*/
