@@ -2,6 +2,7 @@ static char help[] = "Solves a tridiagonal linear system.\n\n";
 
 #include <petscksp.h>
 #include <petscmath.h>
+#include <petscsys.h>
 #include <math.h>
 
 #define pi acos(-1)    /*定义pi（3.1415926...）的值*/
@@ -11,7 +12,7 @@ int main(int argc,char **args)
   Vec            x, z, b;    /*设置所需向量*/
   Mat            A;    /*设置所需矩阵*/
   PetscErrorCode ierr;    /*检查错误信息*/
-  PetscInt       i, ii, col[3], rstart, rend, nlocal, rank;
+  PetscInt       i, ii, col[3], rstart, rend, nlocal, rank, iter = 0;
   /*其中i,ii是矩阵和向量的角标，col是三对角矩阵参数的位置，rstart和rend均为设置矩阵时需要的参数，nlocal和rank为程序并行化所需参数*/
   PetscInt       n = 128, start = 0, end;    /*这是将区域分成n块，start是起始边界，end是终止边界*/
   PetscReal      dx, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
@@ -114,16 +115,26 @@ int main(int argc,char **args)
      ierr = VecAssemblyEnd(x);CHKERRQ(ierr);    /*结束更新*/
 	   
      ierr = VecCopy(x,z);CHKERRQ(ierr);    /*将x的值赋给z*/
+
+
+     iter += 1;    /*记录迭代次数*/
+     if((iter%10)==0){
+       ierr = PetscViewerCreate(PETSC_COMM_WORLD,&pv);CHKERRQ(ierr);    /*创建输出指针*/
+       ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,"explicit.h5",&pv);CHKERRQ(ierr);    /*创建输出文件*/
+
+       ierr = PetscRealView(1, &dx, pv);CHKERRQ(ierr);    /*输出到文件*/
+       ierr = PetscRealView(1, &dt, pv);CHKERRQ(ierr);    /*输出到文件*/
+       ierr = VecView(z, pv);CHKERRQ(ierr);    /*输出到文件*/
+
+       ierr = PetscViewerDestroy(&pv);CHKERRQ(ierr);    /*关闭输出*/
+     }
+
+
   }
   
   ierr = VecView(z,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);    /*打印向量，获得结束时显式方法的值*/
 
-  /*Viewer to output in HDF5 format*/
-  
-  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&pv);CHKERRQ(ierr);    /*创建输出指针*/
-  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,"explicit.dat",&pv);CHKERRQ(ierr);    /*创建输出文件*/
-  ierr = VecView(z, pv);CHKERRQ(ierr);    /*输出到文件*/
-  ierr = PetscViewerDestroy(&pv);CHKERRQ(ierr);    /*关闭输出*/
+
   
   ierr = VecDestroy(&x);CHKERRQ(ierr);    /*关闭向量x*/
   ierr = VecDestroy(&z);CHKERRQ(ierr);    /*关闭向量z*/
