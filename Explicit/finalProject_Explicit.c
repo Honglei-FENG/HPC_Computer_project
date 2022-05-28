@@ -18,7 +18,7 @@ int main(int argc,char **args)
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
   PetscReal      te = k/p/c, alpha;    /*通过dt和dx求解alpha，方便后续计算*/
   PetscScalar    zero = 0.0, value[3], u0 = 0.0;    /*value是设置三对角矩阵的参数，u0是初始条件*/
-  PetscViewer    pv;
+  PetscViewer    pv;    /*创建输出*/
 
 
   ierr = PetscInitialize(&argc,&args,(char*)0,help);if (ierr) return ierr;    /*初始化Petsc*/
@@ -120,10 +120,10 @@ int main(int argc,char **args)
 
   /*Viewer to output in HDF5 format*/
   
-  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&pv);CHKERRQ(ierr);
-  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,"explicit.dat",&pv);CHKERRQ(ierr);
-  ierr = VecView(z, pv);CHKERRQ(ierr);
-  ierr = PetscViewerDestroy(&pv);CHKERRQ(ierr);
+  ierr = PetscViewerCreate(PETSC_COMM_WORLD,&pv);CHKERRQ(ierr);    /*创建输出指针*/
+  ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,"explicit.dat",&pv);CHKERRQ(ierr);    /*创建输出文件*/
+  ierr = VecView(z, pv);CHKERRQ(ierr);    /*输出到文件*/
+  ierr = PetscViewerDestroy(&pv);CHKERRQ(ierr);    /*关闭输出*/
   
   ierr = VecDestroy(&x);CHKERRQ(ierr);    /*关闭向量x*/
   ierr = VecDestroy(&z);CHKERRQ(ierr);    /*关闭向量z*/
