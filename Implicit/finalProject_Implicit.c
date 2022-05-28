@@ -16,10 +16,10 @@ int main(int argc,char **args)
   PetscErrorCode ierr;    /*检查错误信息*/
   PetscInt       i, ii = 0, col[3], rstart, rend, nlocal, rank;
    /*其中i,ii是矩阵和向量的角标，col是三对角矩阵参数的位置，rstart和rend均为设置矩阵时需要的参数，nlocal和rank为程序并行化所需参数*/
-  PetscInt       n = 128, start = 0, end = 0;    /*这是将区域分成n块，start是起始边界，end是终止边界*/
-  PetscReal      dx = 0.0, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
+  PetscInt       n = 128, start = 0, end;    /*这是将区域分成n块，start是起始边界，end是终止边界*/
+  PetscReal      dx, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
-  PetscReal      te = k/p/c, alpha = te*dt*n*n;      /*通过dt和dx求解alpha，方便后续计算*/
+  PetscReal      te = k/p/c, alpha;      /*通过dt和dx求解alpha，方便后续计算*/
   PetscScalar    zero = 0.0, value[3], u0 = 0.0;    /*value是设置三对角矩阵的参数，u0是初始条件*/
 
 
