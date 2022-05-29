@@ -17,8 +17,8 @@ int main(int argc,char **args)
   PetscInt       n = 128, start = 0, end;    /*这是将区域分成n块，start是起始边界，end是终止边界*/
   PetscReal      dx, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
-  PetscReal      te = k/p/c, alpha;    /*通过dt和dx求解alpha，方便后续计算*/
-  PetscScalar    zero = 0.0, value[3], u0 = 0.0;    /*value是设置三对角矩阵的参数，u0是初始条件*/
+  PetscReal      te = k/p/c, alpha, u0 = 0.0;    /*通过dt和dx求解alpha，方便后续计算，u0是初始条件和热传递*/
+  PetscScalar    zero = 0.0, value[3];    /*value是设置三对角矩阵的参数*/
   PetscViewer    pv;    /*创建输出*/
 
   ierr = PetscInitialize(&argc,&args,(char*)0,help);if (ierr) return ierr;    /*初始化Petsc*/
