@@ -21,10 +21,14 @@ int main(int argc,char **args)
   PetscScalar    zero = 0.0, value[3], u0 = 0.0;    /*value是设置三对角矩阵的参数，u0是初始条件*/
   PetscViewer    pv;    /*创建输出*/
 
-
   ierr = PetscInitialize(&argc,&args,(char*)0,help);if (ierr) return ierr;    /*初始化Petsc*/
   ierr = PetscOptionsGetInt(NULL,NULL,"-n",&n,NULL);CHKERRQ(ierr);    /*从命令行读取n的值（若有）*/
   ierr = PetscOptionsGetReal(NULL,NULL,"-dt",&dt,NULL);CHKERRQ(ierr);    /*从命令行读取dt的值（若有）*/
+
+
+  // ierr = PetscOptionsGetString(NULL,NULL,"-rread",filename,sizeof(filename),&rread);;CHKERRQ(ierr);    /*从命令行读取是否重启（若有）*/
+
+
   ierr = MPI_Comm_rank(PETSC_COMM_WORLD, &rank);CHKERRQ(ierr);    /*设置并行MPI参数*/
   ierr = PetscPrintf(PETSC_COMM_WORLD, "n = %d\n", n);CHKERRQ(ierr);    /*将n的值打印出来，方便阅读输出文件时参考*/
 
@@ -73,8 +77,6 @@ int main(int argc,char **args)
   ierr = MatAssemblyBegin(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);    /*通知其余并行块将矩阵统一*/
   ierr = MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);    /*结束通知*/
   ierr = MatView(A, PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);    /*打印矩阵，检查是否出错*/
-  
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"dx = %f\n",dx);CHKERRQ(ierr);    /*将dx的值打印出来，方便阅读输出文件时参考*/
 
   ierr = VecSet(z,zero);CHKERRQ(ierr);    /*设置初始向量z*/
   if(rank == 0)    /*开始设置初始条件*/
@@ -88,7 +90,6 @@ int main(int argc,char **args)
   
   ierr = VecAssemblyBegin(z);CHKERRQ(ierr);    /*通知其余并行块将向量统一*/
   ierr = VecAssemblyEnd(z);CHKERRQ(ierr);    /*结束通知*/
-
   
   ierr = VecSet(b,zero);CHKERRQ(ierr);    /*设置初始向量b*/
   if(rank == 0){    /*开始设置初始条件*/
@@ -116,11 +117,10 @@ int main(int argc,char **args)
 	   
      ierr = VecCopy(x,z);CHKERRQ(ierr);    /*将x的值赋给z*/
 
-
      iter += 1;    /*记录迭代次数*/
      if((iter%10)==0){
        ierr = PetscViewerCreate(PETSC_COMM_WORLD,&pv);CHKERRQ(ierr);    /*创建输出指针*/
-       ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,"explicit.h5",&pv);CHKERRQ(ierr);    /*创建输出文件*/
+       ierr = PetscViewerASCIIOpen(PETSC_COMM_WORLD,"explicit.dat",&pv);CHKERRQ(ierr);    /*创建输出文件*/
 
        ierr = PetscRealView(1, &dx, pv);CHKERRQ(ierr);    /*输出到文件*/
        ierr = PetscRealView(1, &dt, pv);CHKERRQ(ierr);    /*输出到文件*/
@@ -129,12 +129,9 @@ int main(int argc,char **args)
        ierr = PetscViewerDestroy(&pv);CHKERRQ(ierr);    /*关闭输出*/
      }
 
-
   }
   
   ierr = VecView(z,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);    /*打印向量，获得结束时显式方法的值*/
-
-
   
   ierr = VecDestroy(&x);CHKERRQ(ierr);    /*关闭向量x*/
   ierr = VecDestroy(&z);CHKERRQ(ierr);    /*关闭向量z*/
