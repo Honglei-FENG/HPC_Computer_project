@@ -15,7 +15,7 @@ int main(int argc,char **args)
   PetscErrorCode ierr;    /*检查错误信息*/
   PetscInt       i, ii, col[3], rstart, rend, nlocal, rank, iter = 0;
   /*其中i,ii是矩阵和向量的角标，col是三对角矩阵参数的位置，rstart和rend均为设置矩阵时需要的参数，nlocal和rank为程序并行化所需参数*/
-  PetscBool      rread = PETSC_FALSE;
+  PetscBool      rread = PETSC_FALSE;    /*增加重读标志，默认为False*/
   PetscInt       n = 128, start = 0, end;    /*这是将区域分成n块，start是起始边界，end是终止边界*/
   PetscReal      dx, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
@@ -24,11 +24,11 @@ int main(int argc,char **args)
   PetscViewer    pv, h5;    /*创建输出*/
 
   ierr = PetscInitialize(&argc,&args,(char*)0,help);if (ierr) return ierr;    /*初始化Petsc*/
-  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,NULL,NULL);CHKERRQ(ierr);
+  ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,NULL,NULL);CHKERRQ(ierr);    /*开始读取选项参数*/
   ierr = PetscOptionsGetInt(NULL,NULL,"-n",&n,NULL);CHKERRQ(ierr);    /*从命令行读取n的值（若有）*/
   ierr = PetscOptionsGetReal(NULL,NULL,"-dt",&dt,NULL);CHKERRQ(ierr);    /*从命令行读取dt的值（若有）*/
   ierr = PetscOptionsGetBool(NULL,NULL,"-rread",&rread,NULL);CHKERRQ(ierr);    /*从命令行读取是否重启（若有）*/
-  ierr = PetscOptionsEnd();CHKERRQ(ierr);
+  ierr = PetscOptionsEnd();CHKERRQ(ierr);    /*读取选项参数*/
 
 
   ierr = MPI_Comm_rank(PETSC_COMM_WORLD, &rank);CHKERRQ(ierr);    /*设置并行MPI参数*/
@@ -80,12 +80,12 @@ int main(int argc,char **args)
   ierr = MatAssemblyEnd(A,MAT_FINAL_ASSEMBLY);CHKERRQ(ierr);    /*结束通知*/
   ierr = MatView(A, PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);    /*打印矩阵，检查是否出错*/
 
-  if(rread){
+  if(rread){    /*如果rread为True，表示重读，则从文件开始读入*/
       ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,"explicit.h5", FILE_MODE_READ, &h5);CHKERRQ(ierr);    /*创建输出文件*/
-      ierr = VecLoad(z, h5);CHKERRQ(ierr); 
+      ierr = VecLoad(z, h5);CHKERRQ(ierr);    /*将读入的数据加载到向量z中*/
       ierr = PetscViewerDestroy(&h5);CHKERRQ(ierr);    /*关闭输出*/
   }
-  else{
+  else{    /*如果rread为False，表示新的开始，则开始进行向量初始化，构建向量*/
     ierr = VecSet(z,zero);CHKERRQ(ierr);    /*设置初始向量z*/
     if(rank == 0)    /*开始设置初始条件*/
     {
@@ -133,10 +133,10 @@ int main(int argc,char **args)
      ierr = VecCopy(x,z);CHKERRQ(ierr);    /*将x的值赋给z*/
 
      iter += 1;    /*记录迭代次数*/
-     if((iter%10)==0){
+     if((iter%10)==0){    /*如果迭代次数为10的倍数，即每迭代十次*/
        ierr = PetscViewerCreate(PETSC_COMM_WORLD,&h5);CHKERRQ(ierr);    /*创建输出指针*/
        ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,"explicit.h5", FILE_MODE_WRITE, &h5);CHKERRQ(ierr);    /*创建输出文件*/
-       ierr = PetscObjectSetName((PetscObject) z, "explicit-vector");CHKERRQ(ierr);
+       ierr = PetscObjectSetName((PetscObject) z, "explicit-vector");CHKERRQ(ierr);    /*将z输出的名字命名为explicit-vector*/
        ierr = VecView(z, h5);CHKERRQ(ierr);    /*输出到文件*/
        ierr = PetscViewerDestroy(&h5);CHKERRQ(ierr);    /*关闭输出*/
      }
@@ -150,7 +150,7 @@ int main(int argc,char **args)
   ierr = MatDestroy(&A);CHKERRQ(ierr);    /*关闭矩阵A*/
 
   ierr = PetscFinalize();    /*结束并行*/
-  return ierr;
+  return ierr;    /*程序结束*/
 }
 
 // EOF
