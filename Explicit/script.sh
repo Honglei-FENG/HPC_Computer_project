@@ -8,4 +8,4 @@ module purge
 module load intel/2018.4
 module load mpi/intel/2018.4
 
-mpirun -np 1 ./explicit.out > $LSB_JOBID.log 2>&1
+/usr/bin/time -f "run time is: %e" mpirun -np 1 ./explicit.out > $LSB_JOBID.log 2>&1
