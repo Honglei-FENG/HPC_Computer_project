@@ -17,7 +17,7 @@ int main(int argc,char **args)
     /*其中i,ii是矩阵和向量的角标，col是三对角矩阵参数的位置，rstart和rend均为设置矩阵时需要的参数，
     nlocal和rank为程序并行化所需参数,iter是迭代次数*/
   PetscBool      rread = PETSC_FALSE;    /*增加重读标志，默认为False*/
-  PetscInt       n = 128, start = 0, end, index;    /*这是将区域分成n块，start是起始边界，end是终止边界,index仅在存储基础数据时使用*/
+  PetscInt       n = 128, start = 0, end, index;    /*这是将区域分成n块，start是起始边界，end是终止边界,index仅在读取存储基础数据时使用*/
   PetscReal      dx, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
   PetscReal      te = k/p/c, alpha, u0 = 0.0;    /*通过dt和dx求解alpha，方便后续计算，u0是初始条件和热传递*/
@@ -96,7 +96,7 @@ int main(int argc,char **args)
       ierr = VecGetValues(tem,1,&index,&dt);CHKERRQ(ierr);    /*将第二个值赋给dt*/
       index=index+1;    /*索引移向下一位*/
       ierr = VecGetValues(tem,1,&index,&t);CHKERRQ(ierr);    /*将第三个值赋给t*/
-      index= 0;
+      index= 0;    /*索引复位*/
   }
   else{    /*如果rread为False，表示新的开始，则开始进行向量初始化，构建向量*/
     ierr = VecSet(z,zero);CHKERRQ(ierr);    /*设置初始向量z*/
@@ -109,6 +109,7 @@ int main(int argc,char **args)
     ierr = VecAssemblyBegin(z);CHKERRQ(ierr);    /*通知其余并行块将向量统一*/
     ierr = VecAssemblyEnd(z);CHKERRQ(ierr);    /*结束通知*/
   }
+  
   ierr = VecSet(b,zero);CHKERRQ(ierr);    /*设置初始向量b*/
   if(rank == 0){    /*开始设置初始条件*/
     for(ii = 1; ii < n+1; ii++){    /*除首尾两个点外的其余点*/
