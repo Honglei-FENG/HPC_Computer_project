@@ -123,14 +123,7 @@ int main(int argc,char **args)
   ierr = VecAssemblyBegin(b);CHKERRQ(ierr);    /*通知其余并行块将向量统一*/
   ierr = VecAssemblyEnd(b);CHKERRQ(ierr);    /*结束通知*/
   
-  data[0] = dx; data[1] = dt; data[2] = t;    /*将值赋给数组*/
-  ierr = VecSet(tem,zero);CHKERRQ(ierr);    /*初始化矩阵*/
-  for(index=0;index<3;index++){    /*循环遍历数组，并将值赋给向量*/
-    u0 = data[index];    /*将数组的值赋给u0*/
-    ierr = VecSetValues(tem,1,&index,&u0,INSERT_VALUES);CHKERRQ(ierr);    /*将矩阵赋值给向量*/
-  }
-  ierr = VecAssemblyBegin(tem);CHKERRQ(ierr);    /*通知其余并行块将向量统一*/
-  ierr = VecAssemblyEnd(tem);CHKERRQ(ierr);    /*结束通知*/
+
 
   ierr = KSPCreate(PETSC_COMM_WORLD,&ksp);CHKERRQ(ierr);    /*创建ksp解空间*/
   ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);    /*设置方程左侧的系数*/
@@ -155,6 +148,15 @@ int main(int argc,char **args)
 
     iter += 1;    /*记录迭代次数*/
      if((iter%10)==0){    /*如果迭代次数为10的倍数，即每迭代十次*/
+       data[0] = dx; data[1] = dt; data[2] = t;    /*将值赋给数组*/
+       ierr = VecSet(tem,zero);CHKERRQ(ierr);    /*初始化矩阵*/
+       for(index=0;index<3;index++){    /*循环遍历数组，并将值赋给向量*/
+        u0 = data[index];    /*将数组的值赋给u0*/
+        ierr = VecSetValues(tem,1,&index,&u0,INSERT_VALUES);CHKERRQ(ierr);    /*将矩阵赋值给向量*/
+       }
+       ierr = VecAssemblyBegin(tem);CHKERRQ(ierr);    /*通知其余并行块将向量统一*/
+       ierr = VecAssemblyEnd(tem);CHKERRQ(ierr);    /*结束通知*/
+
        ierr = PetscViewerCreate(PETSC_COMM_WORLD,&h5);CHKERRQ(ierr);    /*创建输出指针*/
        ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,"implicit.h5", FILE_MODE_WRITE, &h5);CHKERRQ(ierr);    /*创建输出文件*/
        ierr = PetscObjectSetName((PetscObject) z, "implicit-vector");CHKERRQ(ierr);    /*将z输出的名字命名为explicit-vector*/
