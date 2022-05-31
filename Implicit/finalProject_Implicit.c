@@ -18,7 +18,7 @@ int main(int argc,char **args)
   PetscInt       i, ii, col[3], rstart, rend, nlocal, rank, iter = 0;
     /*其中i,ii是矩阵和向量的角标，col是三对角矩阵参数的位置，rstart和rend均为设置矩阵时需要的参数，
     nlocal和rank为程序并行化所需参数,iter是迭代次数*/
-  PetscBool      rread = PETSC_FALSE;    /*增加重读标志，默认为False*/
+  PetscBool      restart = PETSC_FALSE;    /*增加重读标志，默认为False*/
   PetscInt       n = 128, start = 0, end, index;    /*这是将区域分成n块，start是起始边界，end是终止边界,index仅在读取存储基础数据时使用*/
   PetscReal      dx, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
@@ -30,7 +30,7 @@ int main(int argc,char **args)
   ierr = PetscOptionsBegin(PETSC_COMM_WORLD,NULL,NULL,NULL);CHKERRQ(ierr);    /*开始读取选项参数*/
   ierr = PetscOptionsGetInt(NULL,NULL,"-n",&n,NULL);CHKERRQ(ierr);    /*从命令行读取n的值（若有）*/
   ierr = PetscOptionsGetReal(NULL,NULL,"-dt",&dt,NULL);CHKERRQ(ierr);    /*从命令行读取dt的值（若有）*/
-  ierr = PetscOptionsGetBool(NULL,NULL,"-rread",&rread,NULL);CHKERRQ(ierr);    /*从命令行读取是否重启（若有）*/
+  ierr = PetscOptionsGetBool(NULL,NULL,"-restart",&restart,NULL);CHKERRQ(ierr);    /*从命令行读取是否重启（若有）*/
   ierr = PetscOptionsEnd();CHKERRQ(ierr);    /*读取选项参数结束*/
   
   ierr = MPI_Comm_rank(PETSC_COMM_WORLD, &rank);CHKERRQ(ierr);    /*设置并行MPI参数*/
@@ -42,7 +42,7 @@ int main(int argc,char **args)
   ierr = PetscPrintf(PETSC_COMM_WORLD,"dx = %f\n",dx);CHKERRQ(ierr);    /*将dx的值打印出来，方便阅读输出文件时参考*/
   ierr = PetscPrintf(PETSC_COMM_WORLD,"dt = %f\n",dt);CHKERRQ(ierr);    /*将dt的值打印出来，方便阅读输出文件时参考*/
   ierr = PetscPrintf(PETSC_COMM_WORLD,"alpha = %f\n",alpha);CHKERRQ(ierr);    /*将alpha的值打印出来，方便阅读输出文件时参考*/
-  ierr = PetscPrintf(PETSC_COMM_WORLD,"rread = %d\n",rread);CHKERRQ(ierr);    /*将rread的值打印出来，方便阅读输出文件时参考*/
+  ierr = PetscPrintf(PETSC_COMM_WORLD,"restart = %d\n",restart);CHKERRQ(ierr);    /*将restart的值打印出来，方便阅读输出文件时参考*/
 
   ierr = VecCreate(PETSC_COMM_WORLD,&x);CHKERRQ(ierr);    /*创建一个并行空间*/
   ierr = VecCreate(PETSC_COMM_WORLD,&tem);CHKERRQ(ierr);    /*创建临时向量*/
@@ -85,7 +85,7 @@ int main(int argc,char **args)
   ierr = MatView(A, PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);    /*打印矩阵，检查是否出错*/
   
   /*判断是否需要重读还是新建矩阵*/
-  if(rread){    /*如果rread为True，表示重读，则从文件开始读入*/
+  if(restart){    /*如果restart为True，表示重读，则从文件开始读入*/
       ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,"implicit.h5", FILE_MODE_READ, &h5);CHKERRQ(ierr);    /*创建输入文件*/
       ierr = PetscObjectSetName((PetscObject) z, "implicit-vector");CHKERRQ(ierr);    /*将z输入的名字命名为explicit-vector*/
       ierr = PetscObjectSetName((PetscObject) tem, "implicit-necess-data");CHKERRQ(ierr);    /*将临时向量tem输入的名字命名为explicit-necess-data*/
@@ -100,7 +100,7 @@ int main(int argc,char **args)
       ierr = VecGetValues(tem,1,&index,&t);CHKERRQ(ierr);    /*将第三个值赋给t*/
       index= 0;    /*索引复位*/
   }
-  else{    /*如果rread为False，表示新的开始，则开始进行向量初始化，构建向量*/
+  else{    /*如果restart为False，表示新的开始，则开始进行向量初始化，构建向量*/
     ierr = VecSet(z,zero);CHKERRQ(ierr);    /*设置初始向量b*/
     if(rank == 0){    /*开始设置初始条件*/
       for(ii = 1; ii < n; ii++){    /*除首尾两个点外的其余点*/
@@ -123,8 +123,6 @@ int main(int argc,char **args)
   ierr = VecAssemblyBegin(b);CHKERRQ(ierr);    /*通知其余并行块将向量统一*/
   ierr = VecAssemblyEnd(b);CHKERRQ(ierr);    /*结束通知*/
   
-
-
   ierr = KSPCreate(PETSC_COMM_WORLD,&ksp);CHKERRQ(ierr);    /*创建ksp解空间*/
   ierr = KSPSetOperators(ksp,A,A);CHKERRQ(ierr);    /*设置方程左侧的系数*/
   ierr = KSPGetPC(ksp,&pc);CHKERRQ(ierr);    /*设置矩阵求解的相关系数*/
@@ -148,6 +146,7 @@ int main(int argc,char **args)
 
     iter += 1;    /*记录迭代次数*/
      if((iter%10)==0){    /*如果迭代次数为10的倍数，即每迭代十次*/
+
        data[0] = dx; data[1] = dt; data[2] = t;    /*将值赋给数组*/
        ierr = VecSet(tem,zero);CHKERRQ(ierr);    /*初始化矩阵*/
        for(index=0;index<3;index++){    /*循环遍历数组，并将值赋给向量*/
