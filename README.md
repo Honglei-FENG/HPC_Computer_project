@@ -5,7 +5,7 @@ In the implicit equation folder, run make "implcit.out" to build the executable 
 
 Use "-n " to modify the number of grids and "-dt " to modify the time step.
 
-Use "-rread " to restart facility using HDF5.
+Use "-restart " to restart facility using HDF5.
 
 If you want to run it directly, you can directly execute "bsub<script.sh" after the executable file is generated.
 
