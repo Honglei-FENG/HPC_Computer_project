@@ -17,8 +17,8 @@ int main(int argc,char **args)
     /*其中i,ii是矩阵和向量的角标，col是三对角矩阵参数的位置，rstart和rend均为设置矩阵时需要的参数，
     nlocal和rank为程序并行化所需参数,iter是迭代次数*/
   PetscBool      rread = PETSC_FALSE;    /*增加重读标志，默认为False*/
-  PetscInt       n = 128, start = 0, end, index;    /*这是将区域分成n块，start是起始边界，end是终止边界,index仅在读取存储基础数据时使用*/
-  PetscReal      dx, dt = 0.00003, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
+  PetscInt       n = 100, start = 0, end, index;    /*这是将区域分成n块，start是起始边界，end是终止边界,index仅在读取存储基础数据时使用*/
+  PetscReal      dx, dt = 0.00001, t = 0.0;    /*dx是空间步长，dt是时间步长，t是已经走过的时间*/
   PetscReal      p = 1.0, c = 1.0, k = 1.0;    /*设置初始的条件参数*/
   PetscReal      te = k/p/c, alpha, u0 = 0.0;    /*通过dt和dx求解alpha，方便后续计算，u0是初始条件和热传递*/
   PetscScalar    zero = 0.0, value[3], data[3];    /*zero是所有对象的默认值，value是设置三对角矩阵的参数，data存储基础数据：dx,dt,t*/
@@ -120,15 +120,6 @@ int main(int argc,char **args)
 
   ierr = VecAssemblyBegin(b);CHKERRQ(ierr);    /*通知其余并行块将向量统一*/
   ierr = VecAssemblyEnd(b);CHKERRQ(ierr);    /*结束通知*/  
-
-  data[0] = dx; data[1] = dt; data[2] = t;    /*将值赋给数组*/
-  ierr = VecSet(tem,zero);CHKERRQ(ierr);    /*初始化矩阵*/
-  for(index=0;index<3;index++){    /*循环遍历数组，并将值赋给向量*/
-    u0 = data[index];    /*将数组的值赋给u0*/
-    ierr = VecSetValues(tem,1,&index,&u0,INSERT_VALUES);CHKERRQ(ierr);    /*将矩阵赋值给向量*/
-  }
-  ierr = VecAssemblyBegin(tem);CHKERRQ(ierr);    /*通知其余并行块将向量统一*/
-  ierr = VecAssemblyEnd(tem);CHKERRQ(ierr);    /*结束通知*/
   
   while(PetscAbsReal(t)<=2.0){    /*计算0-2时间内的传播*/
 
@@ -145,14 +136,24 @@ int main(int argc,char **args)
      ierr = VecCopy(x,z);CHKERRQ(ierr);    /*将x的值赋给z*/
 
      iter += 1;    /*记录迭代次数*/
-     if((iter%10)==0){    /*如果迭代次数为10的倍数，即每迭代十次*/
-       ierr = PetscViewerCreate(PETSC_COMM_WORLD,&h5);CHKERRQ(ierr);    /*创建输出指针*/
-       ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,"explicit.h5", FILE_MODE_WRITE, &h5);CHKERRQ(ierr);    /*创建输出文件*/
-       ierr = PetscObjectSetName((PetscObject) z, "explicit-vector");CHKERRQ(ierr);    /*将z输出的名字命名为explicit-vector*/
-       ierr = PetscObjectSetName((PetscObject) tem, "explicit-necess-data");CHKERRQ(ierr);    /*将tem输出的名字命名为explicit-necess-data*/
-       ierr = VecView(tem, h5);CHKERRQ(ierr);    /*tem输出到文件*/
-       ierr = VecView(z, h5);CHKERRQ(ierr);    /*z输出到文件*/
-       ierr = PetscViewerDestroy(&h5);CHKERRQ(ierr);    /*关闭输出*/
+     if((iter % 10) == 0){    /*如果迭代次数为10的倍数，即每迭代十次*/
+     
+      data[0] = dx; data[1] = dt; data[2] = t;    /*将值赋给数组*/
+      ierr = VecSet(tem,zero);CHKERRQ(ierr);    /*初始化矩阵*/
+      for(index=0;index<3;index++){    /*循环遍历数组，并将值赋给向量*/
+        u0 = data[index];    /*将数组的值赋给u0*/
+        ierr = VecSetValues(tem,1,&index,&u0,INSERT_VALUES);CHKERRQ(ierr);    /*将矩阵赋值给向量*/
+      }
+      ierr = VecAssemblyBegin(tem);CHKERRQ(ierr);    /*通知其余并行块将向量统一*/
+      ierr = VecAssemblyEnd(tem);CHKERRQ(ierr);    /*结束通知*/
+
+      ierr = PetscViewerCreate(PETSC_COMM_WORLD,&h5);CHKERRQ(ierr);    /*创建输出指针*/
+      ierr = PetscViewerHDF5Open(PETSC_COMM_WORLD,"explicit.h5", FILE_MODE_WRITE, &h5);CHKERRQ(ierr);    /*创建输出文件*/
+      ierr = PetscObjectSetName((PetscObject) z, "explicit-vector");CHKERRQ(ierr);    /*将z输出的名字命名为explicit-vector*/
+      ierr = PetscObjectSetName((PetscObject) tem, "explicit-necess-data");CHKERRQ(ierr);    /*将tem输出的名字命名为explicit-necess-data*/
+      ierr = VecView(tem, h5);CHKERRQ(ierr);    /*tem输出到文件*/
+      ierr = VecView(z, h5);CHKERRQ(ierr);    /*z输出到文件*/
+      ierr = PetscViewerDestroy(&h5);CHKERRQ(ierr);    /*关闭输出*/
      }
   }
   
