@@ -47,7 +47,7 @@ int main(int argc,char **args)
   ierr = VecCreate(PETSC_COMM_WORLD,&x);CHKERRQ(ierr);    /*创建一个并行空间*/
   ierr = VecCreate(PETSC_COMM_WORLD,&tem);CHKERRQ(ierr);    /*创建临时向量*/
   ierr = VecSetSizes(x,PETSC_DECIDE,n+1);CHKERRQ(ierr);    /*创建一个长度n+1的矩阵*/
-  ierr = VecSetSizes(tem,PETSC_DECIDE, 3);CHKERRQ(ierr);    /*创建长度为3的临时向量*/
+  ierr = VecSetSizes(tem, 3, PETSC_DECIDE);CHKERRQ(ierr);    /*创建长度为3的临时向量*/
   ierr = VecSetFromOptions(x);CHKERRQ(ierr);    /*从选项数据库中配置向量*/
   ierr = VecSetFromOptions(tem);CHKERRQ(ierr);    /*获得参数*/
   ierr = VecDuplicate(x,&z);CHKERRQ(ierr);    /*将x的格式赋给z*/
