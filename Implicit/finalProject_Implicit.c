@@ -168,6 +168,7 @@ int main(int argc,char **args)
 
   ierr = VecView(z,PETSC_VIEWER_STDOUT_WORLD);CHKERRQ(ierr);    /*打印向量，获得结束时隐式方法的值*/
  
+  ierr = KSPDestroy(&ksp);CHKERRQ(ierr);    /*关闭ksp*/
   ierr = VecDestroy(&tem);CHKERRQ(ierr);    /*关闭临时向量*/
   ierr = VecDestroy(&x);CHKERRQ(ierr);    /*关闭向量x*/
   ierr = VecDestroy(&b);CHKERRQ(ierr);    /*关闭向量u*/
