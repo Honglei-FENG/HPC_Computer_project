@@ -130,7 +130,7 @@ int main(int argc,char **args)
   ierr = KSPSetTolerances(ksp,1.e-10,PETSC_DEFAULT,PETSC_DEFAULT,PETSC_DEFAULT);CHKERRQ(ierr);    /*设置各种误差值*/
   ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);    /*从选项数据库中配置ksp解空间*/
 
-  while(PetscAbsReal(t)<3.0){    /*计算0-2时间内的传播*/
+  while(PetscAbsReal(t)<2.0){    /*计算0-2时间内的传播*/
 
     t += dt;    /*时间向前走*/
 
@@ -142,7 +142,7 @@ int main(int argc,char **args)
     ierr = VecAssemblyBegin(x);CHKERRQ(ierr);    /*统一向量更新*/
     ierr = VecAssemblyEnd(x);CHKERRQ(ierr);    /*结束更新*/
 
-    ierr = VecCopy(x,z);CHKERRQ(ierr);    /*将x的值赋给b*/
+    ierr = VecCopy(x,z);CHKERRQ(ierr);    /*将x的值赋给z*/
 
     iter += 1;    /*记录迭代次数*/
      if((iter%10)==0){    /*如果迭代次数为10的倍数，即每迭代十次*/
