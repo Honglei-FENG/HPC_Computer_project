@@ -14,3 +14,5 @@ The output is in "emplicit.h5" or "implicit.h5".
 The answer of each method is at the top of the performance analysis, and the implicit scheme will make the results at the bottom of the comparison.
 
 There are some errors in the report due to the low accuracy of the results of the code submitted. Please refer to it as appropriate. The latest code has sufficient accuracy, but it does not match the report.
+
+Also if you have some problem about this code, you can send an e-mail to me, my e-mail address is francis97@foxmail.com.
