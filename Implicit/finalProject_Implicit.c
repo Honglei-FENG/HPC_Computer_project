@@ -63,20 +63,30 @@ int main(int argc,char **args)
 
   if (!rstart){    /*若rstart为0时，即为首行*/
     rstart = 1;    /*将rstart设为1*/
-    i      = 0; col[0] = 0; col[1] = 1; value[0] = 1+2.0*alpha; value[1] = -alpha;    /*设置要用到的参数*/
+    i      = 0; col[0] = 0; col[1] = 1; value[0] = 1; value[1] = 0;    /*设置要用到的参数*/
     ierr   = MatSetValues(A,1,&i,2,col,value,INSERT_VALUES);CHKERRQ(ierr);    /*设置三对角矩阵的第一行*/
   }
   
   if (rend == n+1){    /*最后一行*/
     rend = n;    /*将rend设为n*/
-    i    = n; col[0] = n-1; col[1] = n; value[0] = -alpha; value[1] = 1+2.0*alpha;    /*设置要用到的参数*/
+    i    = n; col[0] = n-1; col[1] = n; value[0] = 0; value[1] = 1;    /*设置要用到的参数*/
     ierr = MatSetValues(A,1,&i,2,col,value,INSERT_VALUES);CHKERRQ(ierr);    /*设置三对角矩阵的最后一行*/
   }
 
-  value[0] = -alpha; value[1] = 1+2.0*alpha; value[2] = -alpha;    /*设置三对角矩阵除首尾两行外的其余行的三个值*/
   for (i=rstart; i<rend; i++){    /*除首尾两行外的行*/
     col[0] = i-1; col[1] = i; col[2] = i+1;    /*设置要用到的参数*/
-    ierr   = MatSetValues(A,1,&i,3,col,value,INSERT_VALUES);CHKERRQ(ierr);    /*设置三对角矩阵的三对角值*/
+    if(i == 1){
+            value[0] = 0; value[1] = 1+2.0*CFL; value[2] = -CFL;    /*设置三对角矩阵第二行行的三个值*/
+            ierr = MatSetValues(A, 1, &i, 3, col, value, INSERT_VALUES);CHKERRQ(ierr);/*设置三对角矩阵的三对角值*/
+        }
+        else if(i == n-1){
+            value[0] = -CFL; value[1] = 1+2.0*CFL; value[2] = 0;    /*设置三对角矩阵倒数第二行的三个值*/
+            ierr = MatSetValues(A, 1, &i, 3, col, value, INSERT_VALUES);CHKERRQ(ierr);/*设置三对角矩阵的三对角值*/
+        }
+        else{
+            value[0] = -CFL; value[1] = 1+2.0*CFL; value[2] = -CFL;    /*设置三对角矩阵其余行的三个值*/
+            ierr = MatSetValues(A, 1, &i, 3, col, value, INSERT_VALUES);CHKERRQ(ierr);/*设置三对角矩阵的三对角值*/
+        }
   }
 
   /* Assemble the matrix */
