@@ -19,6 +19,10 @@
 
 每种方法的答案都在性能分析的最上面，隐式方案会让结果在比较的最下面。
 
+由于在写报告时的代码结果准确性较低，报告中会存在一些与代码不符合的错误。请酌情参考。最新代码具有较高的准确性（1e-6量级），但报告未随之更新。
+
+另外，如果你对这个代码有什么问题，你可以发电子邮件给我，我的电子邮件地址是francis97@foxmail.com（或者南方科技大学的学校邮箱：12132391）。
+
 English version of readme
 
 This program is written in C language, calling PETSc function library, and is a parallel example of defensive programming.
