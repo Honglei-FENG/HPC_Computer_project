@@ -6,18 +6,18 @@
 
 是南方科技大学的高性能计算的期末编程作业。
 
-在explicit equation文件夹中，运行make“expl cit . out”来构建可执行文件。
-在隐式方程文件夹中，运行make“implcit . out”构建可执行文件。
+在显式方程文件夹中，运行make explicit.out来构建可执行文件。
+在隐式方程文件夹中，运行make implicit.out来构建可执行文件。
 
-使用“-n”修改网格数，使用“-dt”修改时间步长。
+使用“-n”修改网格数，使用“-dt”修改时间步长。（用法例子：-n 500 -t 1e-6）
 
-使用“-restart”通过HDF5重启设备。
+使用“-restart”通过HDF5重启设备。（用法例子：-restart 1）
 
-如果想直接运行，可以在生成可执行文件后直接执行“bsub<script.sh”。
+如果想直接运行，可以在生成可执行文件后直接执行 bsub<script.sh 。
 
-输出在“emplicit.h5”或“implicit.h5”中，dx和dt的参数记录在“emplicit.dat”或“implicit.dat”中。
+t、dx和dt的参数记录以及输出在 emplicit.h5 或 implicit.h5 中。
 
-每种方法的答案都在性能分析的最上面，隐式方案会让结果在比较的最下面。
+每种方法的答案都在性能分析的最上面。隐式方案的结果在比较下面的位置，但仍然在性能分析的上面。
 
 由于在写报告时的代码结果准确性较低，报告中会存在一些与代码不符合的错误。请酌情参考。最新代码具有较高的准确性（1e-6量级），但报告未随之更新。
 
@@ -29,8 +29,8 @@ This program is written in C language, calling PETSc function library, and is a 
 
 It is the final programming project of SUSTech HPC.
 
-In the explicit equation folder, run make "explcit.out" to build the executable file.
-In the implicit equation folder, run make "implcit.out" to build the executable file.
+In the explicit equation folder, run make explicit.out to build the executable file.
+In the implicit equation folder, run make implicit.out to build the executable file.
 
 Use "-n " to modify the number of grids and "-dt " to modify the time step.
 
